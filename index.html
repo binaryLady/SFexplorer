@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Sfexplorer by binaryLady</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Sfexplorer</h1>
+      <h2 class="project-tagline">Meta Data Analyzer For Salesforce</h2>
+      <a href="https://github.com/binaryLady/SFexplorer" class="btn">View on GitHub</a>
+      <a href="https://github.com/binaryLady/SFexplorer/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/binaryLady/SFexplorer/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <p>
+    
+        
+            
+            
+            </p>
+
+<pre><code>        &lt;apex:includeScript value="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"/&gt;
+        &lt;apex:includeScript value="{!URLFOR($Resource.adminTheme,  'timeline/js/d3.v3.min.js')}"/&gt;
+        &lt;apex:includeScript value="{!URLFOR($Resource.adminTheme, 'timeline/js/complete.ly.1.0.1.min.js')}"/&gt;
+        &lt;apex:includeScript value="{!URLFOR($Resource.adminTheme, 'timeline/js/springy.js')}"/&gt;
+        &lt;apex:includeScript value="{!URLFOR($Resource.adminTheme, 'timeline/js/springyui.js')}"/&gt;
+        &lt;apex:includeScript value="//cdnjs.cloudflare.com/ajax/libs/jsforce/1.4.1/jsforce.min.js"/&gt;
+
+        &lt;link rel="stylesheet" href="{!URLFOR($Resource.SF1Theme, 'dist/css/bootstrap.min.css')}"/&gt;
+        &lt;link rel="stylesheet" href="{!URLFOR($Resource.adminTheme, 'timeline/font-awesome/css/font-awesome.min.css')}"/&gt;
+
+
+
+        &lt;style type="text/css"&gt;
+            label, .btn{
+            font-weight: normal;
+            }
+            .form-control{
+            color: #3c3d3e;
+            }
+            .req:after{
+            padding-right: 5px;
+            content: "*";
+            color:#b21522;
+            }
+            .err{
+            color:#b21522;
+            }
+            select.err, input.err {
+            border: 1px solid #b21522; 
+            background: #fce1e0;
+            color: #b21522;
+            font-family:inherit;
+            }
+            .err::-webkit-input-placeholder{
+            color: #b21522;
+            font-family:inherit;
+            }
+            err:-ms-input-placeholder{
+            color: #b21522;
+            font-family:inherit;
+            }
+            .input-group .form-control:not(:first-child):not(:last-child), .input-group-addon:not(:first-child):not(:last-child), .input-group-btn:not(:first-child):not(:last-child){
+            border-radius: 2px;
+            }
+            .input-group .form-control:last-child, .input-group-addon:last-child, .input-group-btn:first-child&gt;.btn-group:not(:first-child)&gt;.btn, .input-group-btn:first-child&gt;.btn:not(:first-child), .input-group-btn:last-child&gt;.btn, .input-group-btn:last-child&gt;.btn-group&gt;.btn, .input-group-btn:last-child&gt;.dropdown-toggle{
+            border-radius: 2px;
+            }
+            .progress-bar.animate {
+            width: 100%;
+            }
+
+            .modal-backdrop {
+            opacity: 0.5;
+            }
+
+            .modal-dialog {
+            -webkit-transform: translate(0px, 50%);
+            transform: translate(0px, 50%);
+            }
+
+            .progress-popup {
+            margin-bottom: 0;
+            }
+
+            .main,.secondary,.tertiary{
+            padding-top: 40px;
+            }       
+
+
+            .node circle {
+            fill: #fff;
+            stroke: darkred;
+            stroke-width: 1.5px;
+
+            }
+
+            .tertiary .node {
+            font-size: 10px;
+            cursor: pointer;  
+            }
+
+            .link {
+            fill: none;
+            stroke: #ccc;
+            stroke-width: 1.5px;
+
+            }
+
+            .titleSeparatingColon{
+            display:none;
+            }
+            .pageTitleIcon{
+            display:none;
+            }
+            .tooltip {
+            position: absolute;
+            color: #FFFFFF;
+            background: #080808;
+            text-align: center;
+            border-radius: 4px;
+            padding: 2px 4px 0px 4px;
+            height: 22px;
+            pointer-events: none;
+            }
+
+            .tooltip .title {
+            font-size: 13px;
+            }
+
+            .tooltip .name {
+            font-weight:bold;
+            }
+            .panel .affix{
+            background-color: transparent;
+            border-bottom-color: transparent;
+
+            }
+            .viz .row, .viz .panel {
+                background-color:transparent;
+            }
+
+            path.arc{
+            fill: transparent;
+            cursor:move;
+
+            }
+
+
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;div  id="container"&gt;
+            &lt;div class="row"&gt;
+
+
+                &lt;nav class="navbar navbar-inverse navbar-fixed-top  affix" role="navigation"&gt;
+                    &lt;div class="col-lg-6 col-md-6"&gt;
+                        &lt;div class="navbar-header"&gt;
+                            &lt;h2 style="display:inline;"&gt;
+                                &lt;small&gt;Salesforce Object Explorer&lt;/small&gt;
+                            &lt;/h2&gt;
+                            &lt;button type="button" id="info" class="btn btn-default " &gt;&lt;i class="fa fa-umbrella"&gt;&lt;/i&gt;&lt;/button&gt;
+                            &lt;button type="button" id="toggleGraph" class="btn btn-default " &gt;&lt;i class="fa fa-anchor"&gt;&lt;/i&gt;Toggle Visual/Graph&lt;/button&gt;
+                            &lt;button type="button" id="toggleViz" class="btn btn-default " &gt;&lt;i class="fa fa-graph"&gt;&lt;/i&gt;Toggle Visualization&lt;/button&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+
+                    &lt;div class="col-lg-6 col-md-6"&gt;
+
+                        &lt;div class="input-group" id="searchMenu"&gt;
+
+                            &lt;div class="input-group-btn"&gt;
+                                &lt;button type="button" class="btn btn-default " id="qButton" aria-expanded="false" onclick="queryThis()"&gt;Query&lt;/button&gt;
+
+                                &lt;ul class="dropdown-menu scrollable-menu q" role="menu"&gt;    
+                                &lt;/ul&gt;
+
+                            &lt;/div&gt;
+                            &lt;div id="qForm"&gt;
+
+                            &lt;/div&gt;
+                            &lt;!---   &lt;input class="form-control qForm" type="text" id="qForm" placeholder="query" /&gt;---&gt;
+
+                        &lt;/div&gt;
+
+                    &lt;/div&gt;
+                &lt;/nav&gt;
+                &lt;div class="row hidden"  id="infoWell"&gt;
+                    &lt;div class="col-lg-6 col-md-6"&gt;
+                        &lt;div class="well"&gt;
+                            &lt;ul class="list-group"&gt;
+                                &lt;li class="list-group-item" &gt;This is a simple tool for exploring all of the objects in your Salesforce instance.&lt;/li&gt;
+                                &lt;li class="list-group-item" &gt;Query an object and then view the fields and relationships for that object. &lt;/li&gt;
+                                &lt;li class="list-group-item" &gt;Click on a field to see data for the field and its usage.&lt;/li&gt;
+                                &lt;li class="list-group-item" &gt;The explorer is powered by remote object queries which makes it quick and efficient!&lt;/li&gt;
+
+
+                            &lt;/ul&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+            &lt;div class="row main show"&gt;
+
+                &lt;div class="col-md-4"&gt;
+                    &lt;div class="panel panel-primary"&gt;
+                        &lt;div class="panel-heading appType"&gt;
+
+
+                        &lt;/div&gt;
+                        &lt;div class="panel-body"&gt;
+                            &lt;div id="fields" &gt;
+                            &lt;/div&gt;
+
+                        &lt;/div&gt;                                
+                    &lt;/div&gt;
+
+                &lt;/div&gt;
+                &lt;div class="col-md-4"&gt;
+                    &lt;div class="panel panel-primary"&gt;
+                        &lt;div class="panel-heading appType"&gt;
+                            &lt;h4 class="panel-heading"&gt;
+                                Object Relationships
+                            &lt;/h4&gt;
+                        &lt;/div&gt;
+                        &lt;div class="panel-body"&gt;
+
+                            &lt;div id="vis"&gt;
+                            &lt;/div&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="col-md-4"&gt;
+                    &lt;div class="panel panel-primary"&gt;
+                        &lt;div class="panel-heading objType"&gt;
+                            &lt;h4 class="panel-heading"&gt;
+                                Record Types 
+                            &lt;/h4&gt;
+                        &lt;/div&gt;
+                        &lt;div class="panel-body"&gt;
+                            &lt;div id="objects" &gt;
+                            &lt;/div&gt;
+
+                        &lt;/div&gt;                                
+                    &lt;/div&gt;
+
+                &lt;/div&gt;
+
+
+            &lt;/div&gt;
+            &lt;div class="viz hidden"&gt;
+                &lt;div class="row secondary show"&gt;
+
+
+                    &lt;div class="col-lg-12 col-xs-12"&gt;
+                        &lt;div class="panel panel-primary"&gt;
+                            &lt;div class="panel-heading objType affix"  &gt;
+                                &lt;apex:sectionHeader title="Visual Representation" subtitle="Child Relationships" /&gt;
+                                &lt;h4 id="title1"&gt;
+                                &lt;/h4&gt;
+                            &lt;/div&gt;
+                            &lt;div class="panel-body"&gt;
+                                &lt;div id="chart" style="padding-top: 20px"&gt;
+                                &lt;/div&gt;
+
+                            &lt;/div&gt;                                
+                        &lt;/div&gt;
+
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="row tertiary hidden"&gt;
+
+
+                    &lt;div class="col-lg-12 col-xs-12"&gt;
+                        &lt;div class="panel panel-primary"&gt;
+                            &lt;div class="panel-heading objType affix" style="width:100%"&gt;
+                                &lt;apex:sectionHeader title="Visual Representation" subtitle="Child Relationships"/&gt;
+                                &lt;h4 id="title2"&gt;
+                                &lt;/h4&gt;
+                            &lt;/div&gt;
+                            &lt;div class="panel-body"&gt;
+                                &lt;div id="chart2" &gt;
+                                &lt;/div&gt;
+
+                            &lt;/div&gt;                                
+                        &lt;/div&gt;
+
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+
+        &lt;/div&gt;   
+
+        &lt;script&gt;
+        var data
+        var $j = jQuery.noConflict();
+        var globalJson;
+        var globalLinks;
+        var globalTitle;
+        //Tool tip holder
+        var tiper = d3.select('body')
+        .append("div")
+        .attr("width","100%")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+        function hideTip(){
+             tiper.transition()
+            .style("opacity", 0)
+        }
+
+        //var w = document.getElementById('container').offsetWidth;
+        //var h = w *1.5;
+        //var c20c = d3.scale.category20c();
+        //create links 
+        //   d3.select(window).on("resize",  throttle);
+        function linkObj(source){
+            this.name = source;
+            this.children = [];
+        }
+        function fNodeObj(source, id, value){
+            this.name = source;
+            this.id = id;
+            this.value = value;
+            this.children = [];
+        }
+
+        function fLinkObj(source, target, type){
+            this.source = source;
+            this.target = target;
+            this.value = type;
+        }
+
+
+        $j('#info').click(function(){
+            $j('#infoWell').toggleClass('hidden show')
+
+        })
+        var qTerm;
+        // $j(".secondary").css('display','none');
+
+        $j("#toggleGraph").click(function(){
+            $j(".viz").toggleClass('hidden show')
+            $j(".main").toggleClass('hidden show')
+        })
+        $j("#toggleViz").click(function(){
+            $j(".secondary").toggleClass('hidden show')
+            $j(".tertiary").toggleClass('hidden show')
+        })
+
+        /*   var throttleTimer;
+        function throttle() {
+            window.clearTimeout(throttleTimer);
+            throttleTimer = window.setTimeout(function () {
+                redraw();
+
+            }, 200);}
+        function redraw(){
+            w = document.getElementById('container').offsetWidth - 20;
+            h = document.getElementById('container').offsetHeight - 30;
+            if(globalJson != null){
+                createForce(globalJson, globalTitle);
+            }
+            if(globalLinks != null){
+                createG(globalLinks);
+            }
+
+        }
+        */
+
+        function createForce(json, dArray){
+            globalJson = json;
+            globalTitle = dArray;
+            var root;
+            var m, n,
+                w = 1280,
+                h = 900,
+                rx = w / 2,
+                ry = h / 2,
+                r = 7;
+
+            d3.selectAll("#chart2 svg").remove();
+
+            var force = d3.layout.force()
+            .size([960, 1000])
+            .gravity(.01)
+            .linkDistance(75)
+            .charge(-200)
+            .friction(.9)
+            .theta(0.9)
+            .alpha(0.9)
+            .on("tick", tick);
+
+            var svg = d3.select("#chart2").append("svg")
+            .attr("width", w)
+            .attr("height", h)
+
+            var vis = svg.append("svg:svg")
+            .attr("width", w-30)
+            .attr("height", w-30)
+            .attr("transform", "translate(" + h + "," + 600+ ")")
+            .append("svg:g")
+
+
+            link = vis.selectAll(".link"),
+            node = vis.selectAll(".node");
+
+            root = json.nodes;
+            update();
+
+            function update() {
+                var nodes = flatten(root),
+                    links = d3.layout.tree().links(nodes);
+
+                force
+                .nodes(nodes)
+                .links(links)
+                .start();
+
+                var grads = svg.append("defs").selectAll("radialGradient")
+                .data(nodes)
+                .enter()
+                .append("radialGradient")
+                .attr("gradientUnits", "objectBoundingBox")
+                .attr("cx", 0)
+                .attr("cy", 0)
+                .attr("r", "100%")
+                .attr("id", function(d, i) { return "grad" + i; });
+
+                grads.append("stop")
+                .attr("offset", "0%")
+                .style("stop-color", "white");
+
+
+                m = dArray.length;
+                console.log("m " + m.length);
+
+                var color = d3.scale.category20()
+                .domain(d3.range(m));
+                grads.append("stop")
+                .attr("offset", "100%")
+                .style("stop-color",  function(d) {return color(d.name); });
+                // Update the links…
+                link = link.data(links, function(d) { return d.target.id; });
+
+                // Exit any old links.
+                link.exit().remove();
+
+                // Enter any new links.
+                link.enter().insert("line", ".node")
+                .attr("class", "link")
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+                // Update the nodes…
+                node = node.data(nodes, function(d) { return d.id; }).style("stop-color",  function(d) { return color(d.name); });
+
+
+                // Exit any old nodes.
+                node.exit().remove();
+
+                // Enter any new nodes.
+                var nodeEnter = node.enter().append("circle")
+                .attr("class", "node")
+                .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
+                .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); })
+                .attr("r", function(d) { return Math.sqrt(d.size) / 7 || 7.5; })
+                .style("fill", function(d, i) {
+                    return "url(#grad" + i + ")";
+                })
+                .on("mouseover", function(d){
+                    tiper.transition()
+                    .style("opacity", 0)
+                    tiper
+                    .transition()
+                    .style("opacity", .9)
+                    tiper.html('&lt;p&gt;'  +  d.name +'&lt;/p&gt;')
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+                })
+                .on("mouseout", hideTip)
+                .on("click", click)
+                .call(force.drag);
+
+                var text = svg.append("svg:g").selectAll("circle")
+                .data(force.nodes())
+                .enter().append("svg:g");
+
+
+            }
+
+            function tick() {
+                link.attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
+                node
+                .attr("cx", function(d) { return d.x = Math.max(r, Math.min(w - r, d.x)); })
+                .attr("cy", function(d) { return d.y = Math.max(r, Math.min(h - r, d.y)); })
+
+
+            }
+
+
+            // Toggle children on click.
+            function click(d) {
+                if (!d3.event.defaultPrevented) {
+                    if (d.children) {
+                        d._children = d.children;
+                        d.children = null;
+                    } else {
+                        d.children = d._children;
+                        d._children = null;
+                    }
+                    update();
+                }
+            }
+
+            // Returns a list of all nodes under the root.
+            function flatten(root) {
+                var nodes = [], i = 0;
+
+                function recurse(node) {
+                    if (node.children) node.children.forEach(recurse);
+                    if (!node.id) node.id = ++i;
+                    nodes.push(node);
+                }
+
+                recurse(root);
+                return nodes;
+            }
+
+        }
+
+        function createG(mJson){
+            globalLinks = mJson;
+            d3.selectAll("#chart svg").remove();
+
+            var
+                w = 1280,
+                h = 900,
+                rx = w / 2 + 100,
+                ry = h / 2 ,
+                m0,
+                rotate = 0,
+                paddingL = 30,
+                paddingT = 30;
+
+            var cluster = d3.layout.tree()
+            .size([360, ry-120 ])
+            .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+
+            var diagonal = d3.svg.diagonal.radial()
+            .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+
+            var svg = d3.select("#chart").append("svg")
+            .attr("width", w- 30  + "px")
+            .attr("height", w -30 + "px")
+
+            var vis = svg.append("svg:svg")
+            .attr("width", w-30)
+            .attr("height", w-30)
+            .append("svg:g")
+            .attr("transform", "translate(" + rx + "," + (ry + 100)+  ")");
+
+            vis.append("svg:path")
+            .attr("class", "arc")
+            .attr("d", d3.svg.arc().innerRadius(ry - 120).outerRadius(ry).startAngle(0).endAngle(2 * Math.PI))
+            .on("mousedown", mousedown);
+
+
+            var nodes = cluster.nodes(mJson);
+
+            var link = vis.selectAll("path.link")
+            .data(cluster.links(nodes))
+            .enter().append("svg:path")
+            .attr("class", "link")
+            .attr("d", diagonal);
+
+            var node = vis.selectAll("g.node")
+            .data(nodes)
+            .enter().append("svg:g")
+            .attr("class", "node")
+            .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y   + ")"; })
+
+            node.append("svg:circle")
+            .attr("r", 3);
+
+            node.append("svg:text")
+            .attr("dx", function(d) { return d.x &lt; 180 ? 8 : -8; })
+            .attr("dy", ".31em")
+            .attr("text-anchor", function(d) { return d.x &lt; 180 ? "start" : "end"; })
+            .attr("transform", function(d) { return d.x &lt; 180 ? null : "rotate(180)"; })
+            .text(function(d) { return d.name; });
+
+
+            d3.select(window)
+            .on("mousemove", mousemove)
+            .on("mouseup", mouseup);
+
+            function mouse(e) {
+                return [e.pageX - rx, e.pageY - ry];
+            }
+
+            function mousedown() {
+                m0 = mouse(d3.event);
+                d3.event.preventDefault();
+            }
+
+            function mousemove() {
+                if (m0) {
+                    var m1 = mouse(d3.event),
+                        dm = Math.atan2(cross(m0, m1), dot(m0, m1)) * 180 / Math.PI,
+                        tx = "translate3d(0," + (ry - rx) + "px,0)rotate3d(0,0,0," + dm + "deg)translate3d(0," + (rx - ry) + "px,0)";
+                    svg
+                    .style("-moz-transform", tx)
+                    .style("-ms-transform", tx)
+                    .style("-webkit-transform", tx);
+                }
+            }
+
+            function mouseup() {
+                if (m0) {
+                    var m1 = mouse(d3.event),
+                        dm = Math.atan2(cross(m0, m1), dot(m0, m1)) * 180 / Math.PI,
+                        tx = "rotate3d(0,0,0,0deg)";
+
+                    rotate += dm;
+                    if (rotate &gt; 360) rotate -= 360;
+                    else if (rotate &lt; 0) rotate += 360;
+                    m0 = null;
+
+                    svg
+                    .style("-moz-transform", tx)
+                    .style("-ms-transform", tx)
+                    .style("-webkit-transform", tx);
+
+                    vis
+                    .attr("transform", "translate(" + rx + "," + (ry + 100) + ")rotate(" + rotate + ")")
+                    .selectAll("g.node text")
+                    .attr("dx", function(d) { return (d.x + rotate) % 360 &lt; 180 ? 8 : -8; })
+                    .attr("text-anchor", function(d) { return (d.x + rotate) % 360 &lt; 180 ? "start" : "end"; })
+                    .attr("transform", function(d) { return (d.x + rotate) % 360 &lt; 180 ? null : "rotate(180)"; });
+                }
+            }
+
+            function cross(a, b) {
+                return a[0] * b[1] - a[1] * b[0];
+            }
+
+            function dot(a, b) {
+                return a[0] * b[0] + a[1] * b[1];
+            }
+
+
+
+        }
+
+        var conn = new jsforce.Connection({ accessToken: '{!$Api.Session_Id}' });
+        queryThis();
+
+        conn.describeGlobal(function(err, res) {
+            if (err) { return console.error(err); }
+
+            var availableTags = [];
+            var labels = res.sobjects;
+            labels.forEach(function(d){availableTags.push(d.name.toLowerCase());})
+            var auto = completely(document.getElementById('qForm'), {
+                fontSize : '14px',
+                fontFamily : 'Arial',
+                color:'#494949',
+            });
+            auto.options = availableTags;
+            $j(auto.input).addClass("autoIn form-control");
+            $j(auto.wrapper).addClass("form-control");
+            $j(auto.hint).addClass("form-control");
+            $j(auto.prompt).addClass("form-control drop");
+            $j(auto.dropDown).addClass("drop");
+
+            auto.onChange = function(text){
+
+                if(text.toLowerCase() != text){
+                    auto.hint.value = text.toLowerCase();
+                    auto.input.value = text.toLowerCase();
+
+                    return;
+                }
+
+                auto.repaint(); 
+
+            }
+
+            setTimeout(function() {
+                auto.input.focus();
+            },0);
+            $j("#qButton").on('click', queryThis());
+            $j("a").click(function(e){
+                e.preventDefault();
+            })
+        });
+
+
+
+        function queryThis(){
+            d3.selectAll("h4 text").remove();
+
+            d3.selectAll("#chart svg").remove();
+            d3.selectAll("#chart2 svg").remove();
+            d3.selectAll("#vis p").remove();
+            d3.selectAll("#vis ul").remove();
+            d3.selectAll("#objects ul").remove();
+
+            var field = ''; 
+            var objName = '';
+            var fieldName = '';
+
+            field = $j(".autoIn").val();   
+
+            if(field == null || field == ''){
+                field = 'Account';
+            }
+
+            d3.selectAll("h4").append("text").text(field);
+
+            conn.sobject(field).describe$(function(err, meta) {
+                var links = [];
+                var mySet = [];
+                // var fLinks = [];
+                var fSet = [];
+
+
+                var mData;
+                if (err) { return console.error(err); }
+                d3.selectAll('.enter').remove();
+
+                fieldData= meta.fields;
+
+                var rData = meta.childRelationships;
+
+                var recData = meta.recordTypeInfos;
+
+                var layData = meta.namedLayoutInfos;
+
+                var parent = field;
+                var myParent = {};
+                var myChildren = {};
+                myParent["name"] = parent;
+
+                myChildren = [];
+                myParent["children"] = myChildren;
+                //console.log(myParent);
+
+
+                //initialize the links for cluster layout Begin Here....
+
+                $j.each(rData, function(i){
+                    mySet.push(rData[i]['field']);              
+                });
+
+                var defArray = d3.set(mySet).values();
+
+                $j.each(defArray, function(i){
+                    var myLinkObj = new linkObj(defArray[i]);
+                    myParent["children"].push(myLinkObj);
+
+                })
+                function getRandomArbitrary(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+                var count = 0;
+                $j.each(myParent["children"], function(i){
+                    count++;
+                    //console.log('parent ' + myParent["children"][i]["name"]);
+                    $j.each(rData, function(j){
+                        //console.log('inLoop ' + rData[j]["field"] )
+                        if(rData[j]['field'] == myParent["children"][i]["name"]){
+
+                            var namedChild = {};
+                            namedChild["name"] = rData[j]['childSObject'];
+                            namedChild["relationship"] = rData[j]['relationshipName'];
+                            namedChild["size"] = getRandomArbitrary(1, 4000);
+                            myParent["children"][i]["children"].push(namedChild);
+
+                        }
+
+                    })
+
+                })
+
+                createG(myParent);
+
+                //end Cluster Layout setup
+                var fparent = field;
+                var myfParent = {};
+                var myfChildren = {};
+                var fNodes = {};
+                var fLinks = [];
+
+                myfParent["name"] = fparent;
+                myfChildren = [];
+                myfParent["children"] = myfChildren;
+
+
+                $j.each(rData, function(i){
+                    fSet.push(rData[i]['field']);               
+                });
+
+                var fArray = d3.set(fSet).values();
+
+                $j.each(defArray, function(i){
+                    var myNodeObj = new fNodeObj(defArray[i]);
+                    myfParent["children"].push(myNodeObj);
+                    myfParent["value"] = 70;
+
+                })
+                function getRandomArbitrary(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+                var count = 0;
+                $j.each(myfParent["children"], function(i){
+                    count++;
+                    //console.log('parent ' + myParent["children"][i]["name"]);
+                    $j.each(rData, function(j){
+                        //console.log('inLoop ' + rData[j]["field"] )
+                        if(rData[j]['field'] == myfParent["children"][i]["name"]){
+
+                            var namedChild = {};
+                            namedChild["name"] = rData[j]['childSObject'];
+                            namedChild["relationship"] = rData[j]['relationshipName'];
+                            namedChild["value"] = 75;
+                            myfParent["children"][i]["children"].push(namedChild);
+                            myfParent["children"][i]["id"] = rData[j]['field'];
+                            var myLinkObj = new fLinkObj(rData[j]['field'], rData[j]['childSObject']);
+                            fLinks.push(myLinkObj);
+
+                        }
+
+                    })
+
+                })
+
+                fNodes["nodes"] = myfParent;
+                fNodes["links"] = fLinks;
+
+                //console.log('fNodes ' + JSON.stringify(fNodes));    
+
+                createForce(fNodes, defArray);
+
+
+                var obj = d3.select("#objects")              
+                .append("ul")
+                .attr("class", "list-group enter")
+                .selectAll("li")
+                .data(recData)
+                .enter()
+                .append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#2E3AD5" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return  'name: ' + d.name;})
+
+                obj.append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#5C97ED" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'record type id: ' + d.recordTypeId;})
+
+                obj.append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#5C97ED" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'default mapping: ' + d.defaultRecordTypeMapping;})
+
+                obj.append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#5C97ED" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'urls: ' + d.urls[d3.keys(d.urls)];})
+
+                var graph = d3.select("#vis")              
+
+                var list = graph.append("ul")
+                .attr("class", "list-group enter")
+                .selectAll("li")
+                .data(rData)
+                .enter()
+                .append("li")
+                .attr("class",function(d){return "list-group-item " +  d.field;})
+                .append("a")
+                .attr("href", "#")
+                .style("color", "#2E3AD5" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'field: ' + d.field;})
+                .on("click",  function(d){return addDiv(this, d)})
+
+                list.append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#5C97ED" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'relationship name: ' + d.relationshipName;})
+
+                list.append("li")
+                .attr("class", "list-group-item")
+                .style("color", "#5C97ED" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return 'child sObject: ' + d.childSObject;})
+
+                //console.log('child rel. ' + d3.keys(rData[0]));
+                var height, width;
+                width = document.getElementById("vis").offsetWidth;
+                height = width / 1.5;
+                var header = d3.select(".appType")
+                .append("h4")
+                .attr("class", "panel-heading enter")
+                .text(field + " Fields")
+
+                var fields = d3.select("#fields")              
+                .append("ul")
+                .attr("class", "list-group enter")
+                .selectAll("li")
+                .data(fieldData)
+                .enter()
+                .append("li")
+                .attr("class", "list-group-item")
+                .append("a")
+                .attr("id", function(d){return '#' + d.name;})
+                .attr("href", "#")
+                .style("color", "#2E3AD5" )
+                .style("font-size", "12px")  
+                .text(function(d, i){return d.label;})
+                .on("click", function(d){
+                    d3.selectAll(".child li").remove();
+                    var lis = d3.select(this).append("ul");
+
+                    objName = field;
+                    fieldLabel = d.name;
+
+                    lis
+                    .attr("class","child")
+
+                    lis
+                    .append("li")
+                    .text('api name: ' + d.name)
+
+                    lis
+                    .append("li")
+                    .text('type: ' + d.type)
+
+                    lis
+                    .append("li")
+                    .text('field length: ' + d.length)
+                    //queryObj(rData);
+                    var qString = "SELECT COUNT(" + fieldLabel +") FROM " + objName + " WHERE " + fieldLabel + " != null"; 
+                    conn.query(qString, function(err, result) {
+                        if (err) { return console.error(err); }
+                        //console.log("total : " + result.totalSize);
+
+                        lis.append('li')
+                        .text('total number of records using field: ' +  result.records[0].expr0);
+                    })
+
+                })
+                $j("a").click(function(e){
+                    e.preventDefault();
+                })
+
+            });
+            function addDiv(i, mData){
+
+                if($j(".springy").val() != null){
+                    $j(".springy").remove();}
+
+                var wrap = i.parentNode;
+                var $jcan = $j("&lt;canvas class='springy' style='width:300px; height:150px;'&gt;&lt;/canvas&gt;")
+                var newDiv = $j(wrap).append($jcan);
+
+                var spring = new Springy.Graph();
+                var children = spring.newNode({label: mData.childSObject});
+
+                var parents = spring.newNode({label: mData.field});
+
+                spring.newEdge(parents, children,{color: '#DC007C'});
+
+
+                $j(function(){
+                    var springy = window.springy = $j(".springy").springy({
+                        graph: spring});
+                });
+
+
+            }
+
+
+        }
+
+        &lt;/script&gt;
+    &lt;/body&gt;
+&lt;/html&gt;
+</code></pre>
+
+<p><a href="/apex:page">/apex:page</a></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/binaryLady/SFexplorer">Sfexplorer</a> is maintained by <a href="https://github.com/binaryLady">binaryLady</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
